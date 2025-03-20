@@ -6,11 +6,28 @@ import { Button } from '@/components/ui/button';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from '@/components/ui/use-toast';
 
+type Student = {
+  id: string;
+  name: string;
+  email: string;
+  studentId: string;
+  program: string;
+}
+
+type Supervisor = {
+  id: string;
+  name: string;
+  email: string;
+  employeeId: string;
+  department: string;
+}
+
 const Attendance = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [personType, setPersonType] = useState<'student' | 'supervisor' | null>(null);
   const [personId, setPersonId] = useState<string | null>(null);
+  const [personName, setPersonName] = useState<string | null>(null);
 
   useEffect(() => {
     // Parse the URL parameters
@@ -21,12 +38,33 @@ const Attendance = () => {
     if (studentId) {
       setPersonType('student');
       setPersonId(studentId);
+      
+      // Get student name from localStorage
+      const storedStudents = localStorage.getItem('students');
+      if (storedStudents) {
+        const students: Student[] = JSON.parse(storedStudents);
+        const student = students.find(s => s.id === studentId);
+        if (student) {
+          setPersonName(student.name);
+        }
+      }
     } else if (supervisorId) {
       setPersonType('supervisor');
       setPersonId(supervisorId);
+      
+      // Get supervisor name from localStorage
+      const storedSupervisors = localStorage.getItem('supervisors');
+      if (storedSupervisors) {
+        const supervisors: Supervisor[] = JSON.parse(storedSupervisors);
+        const supervisor = supervisors.find(s => s.id === supervisorId);
+        if (supervisor) {
+          setPersonName(supervisor.name);
+        }
+      }
     } else {
       setPersonType(null);
       setPersonId(null);
+      setPersonName(null);
     }
   }, [location.search]);
 
@@ -71,8 +109,8 @@ const Attendance = () => {
             <>
               <p className="text-gray-600 mb-4">
                 {personType === 'student' 
-                  ? `Track and manage attendance records for student ID: ${personId}`
-                  : `Track and manage attendance records for supervisor ID: ${personId}`}
+                  ? `Track and manage attendance records for student: ${personName || 'Unknown'} (ID: ${personId})`
+                  : `Track and manage attendance records for supervisor: ${personName || 'Unknown'} (ID: ${personId})`}
               </p>
               <div className="border rounded-lg p-4 bg-gray-50">
                 <h3 className="font-semibold text-lg mb-4">Attendance Log</h3>

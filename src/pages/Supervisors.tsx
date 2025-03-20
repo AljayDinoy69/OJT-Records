@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Logo from '@/components/Logo';
 import { Button } from '@/components/ui/button';
@@ -47,6 +47,14 @@ const Supervisors = () => {
     },
   });
 
+  // Load supervisors from localStorage on component mount
+  useEffect(() => {
+    const storedSupervisors = localStorage.getItem('supervisors');
+    if (storedSupervisors) {
+      setSupervisors(JSON.parse(storedSupervisors));
+    }
+  }, []);
+
   const handleLogout = () => {
     localStorage.removeItem("isLoggedIn");
     toast({
@@ -67,7 +75,11 @@ const Supervisors = () => {
     };
 
     // Add the new supervisor to the state
-    setSupervisors(prevSupervisors => [...prevSupervisors, newSupervisor]);
+    const updatedSupervisors = [...supervisors, newSupervisor];
+    setSupervisors(updatedSupervisors);
+    
+    // Save to localStorage
+    localStorage.setItem('supervisors', JSON.stringify(updatedSupervisors));
 
     // Show success message
     toast({

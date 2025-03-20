@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Logo from '@/components/Logo';
 import { Button } from '@/components/ui/button';
@@ -47,6 +47,14 @@ const Students = () => {
     },
   });
 
+  // Load students from localStorage on component mount
+  useEffect(() => {
+    const storedStudents = localStorage.getItem('students');
+    if (storedStudents) {
+      setStudents(JSON.parse(storedStudents));
+    }
+  }, []);
+
   const handleLogout = () => {
     localStorage.removeItem("isLoggedIn");
     toast({
@@ -67,7 +75,11 @@ const Students = () => {
     };
 
     // Add the new student to the state
-    setStudents(prevStudents => [...prevStudents, newStudent]);
+    const updatedStudents = [...students, newStudent];
+    setStudents(updatedStudents);
+    
+    // Save to localStorage
+    localStorage.setItem('students', JSON.stringify(updatedStudents));
 
     // Show success message
     toast({
