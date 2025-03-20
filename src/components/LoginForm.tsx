@@ -3,7 +3,8 @@ import React, { useState } from 'react';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { toast } from './ui/use-toast';
-import { Mail, Lock, EyeOff, Eye, Facebook, ArrowRight } from 'lucide-react';
+import { Mail, Lock, EyeOff, Eye, Facebook } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface LoginFormProps {
   onToggleForm: () => void;
@@ -14,6 +15,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onToggleForm }) => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,11 +25,17 @@ const LoginForm: React.FC<LoginFormProps> = ({ onToggleForm }) => {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
       
+      // Set login status in localStorage (in a real app, you would store tokens)
+      localStorage.setItem("isLoggedIn", "true");
+      
       // For demo, just show success message
       toast({
         title: "Login Successful",
         description: "Welcome back to OJ.Track!",
       });
+      
+      // Redirect to home page
+      navigate('/home');
     } catch (error) {
       toast({
         title: "Login Failed",
@@ -37,6 +45,23 @@ const LoginForm: React.FC<LoginFormProps> = ({ onToggleForm }) => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleSocialLogin = (provider: string) => {
+    // Simulate social login
+    setIsLoading(true);
+    
+    setTimeout(() => {
+      localStorage.setItem("isLoggedIn", "true");
+      
+      toast({
+        title: `${provider} Login Successful`,
+        description: "Welcome to OJ.Track!",
+      });
+      
+      navigate('/home');
+      setIsLoading(false);
+    }, 1000);
   };
 
   return (
@@ -109,12 +134,20 @@ const LoginForm: React.FC<LoginFormProps> = ({ onToggleForm }) => {
           <div className="h-px bg-gray-300 flex-1"></div>
         </div>
         
-        <button className="social-login-btn bg-[#1877F2] text-white hover:bg-[#0C63D4]">
+        <button 
+          className="social-login-btn bg-[#1877F2] text-white hover:bg-[#0C63D4]"
+          onClick={() => handleSocialLogin('Facebook')}
+          disabled={isLoading}
+        >
           <Facebook className="h-5 w-5" />
           <span>Login with Facebook</span>
         </button>
         
-        <button className="social-login-btn bg-white text-gray-700 border-gray-300 hover:bg-gray-50">
+        <button 
+          className="social-login-btn bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+          onClick={() => handleSocialLogin('Google')}
+          disabled={isLoading}
+        >
           <svg className="h-5 w-5" viewBox="0 0 24 24">
             <path
               d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"

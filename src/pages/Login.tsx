@@ -21,9 +21,12 @@ const Login = () => {
           <a href="#" className="log-in-text">
             {showLoginForm ? "Need help?" : "Log in"}
           </a>
-          <a href="#" className="sign-up-button">
+          <button 
+            onClick={toggleForm} 
+            className="sign-up-button"
+          >
             {showLoginForm ? "Sign up" : "Help"}
-          </a>
+          </button>
         </div>
       </header>
 
@@ -57,18 +60,18 @@ const Login = () => {
               We stock a wide selection of titles for every kind of gamer.
             </motion.p>
             
-            <motion.a 
-              href="#"
+            <motion.button 
+              onClick={toggleForm}
               className="bg-ojtrack-pink text-white px-8 py-3 rounded-full inline-flex items-center gap-2 w-fit hover:bg-opacity-90 transition-all hover:translate-y-[-2px] shadow-lg"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5, delay: 0.4 }}
             >
-              SIGN-UP HERE 
+              {showLoginForm ? "SIGN-UP HERE" : "LOGIN HERE"}
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M5 12H19M19 12L13 6M19 12L13 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
-            </motion.a>
+            </motion.button>
           </div>
 
           {/* Right column - form */}

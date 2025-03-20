@@ -6,8 +6,14 @@ const Index = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Redirect to login page
-    navigate("/login");
+    // Check if user is logged in (in a real app, you would check authentication status)
+    const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+    
+    if (isLoggedIn) {
+      navigate("/home");
+    } else {
+      navigate("/login");
+    }
   }, [navigate]);
 
   return (
