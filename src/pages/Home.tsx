@@ -1,13 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from "@/components/ui/use-toast";
-import { useNavigate } from 'react-router-dom';
+import Logo from '@/components/Logo';
 import { Button } from '@/components/ui/button';
-import { Users, UserCircle, Clock, BarChart3 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import Navbar from '@/components/Navbar';
+import { Users, UserCircle, Clock, BarChart3, Settings, Info, BookOpen, ListChecks, LogOut } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import Navbar from '@/components/Navbar';
-import Header from '@/components/Header';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 type Student = {
   id: string;
@@ -102,10 +111,75 @@ const Home = () => {
     setRecentAttendees(mockAttendees);
   }, []);
 
+  const handleLogout = () => {
+    localStorage.removeItem("isLoggedIn");
+    toast({
+      title: "Logged out successfully",
+      description: "You have been logged out of your account",
+    });
+    navigate('/login');
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       {/* Header */}
-      <Header userName={userName} />
+      <header className="w-full px-6 py-4 flex justify-between items-center z-10 bg-ojtrack-blue text-white">
+        <Logo />
+        
+        <div className="flex items-center gap-4">
+          {/* User Profile Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="relative h-10 w-10 rounded-full overflow-hidden border-2 border-white hover:border-white hover:bg-ojtrack-navy">
+                <Avatar className="h-10 w-10">
+                  <AvatarImage src="/placeholder.svg" alt={userName} />
+                  <AvatarFallback className="bg-ojtrack-navy text-white">
+                    {userName.split(' ').map(n => n[0]).join('').toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56" align="end">
+              <DropdownMenuLabel>
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium leading-none">{userName}</p>
+                  <p className="text-xs leading-none text-muted-foreground">Administrator</p>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => navigate('/profile-settings')}>
+                <UserCircle className="mr-2 h-4 w-4" />
+                <span>Profile Settings</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate('/settings')}>
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Settings</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate('/about')}>
+                <Info className="mr-2 h-4 w-4" />
+                <span>About this Web App</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate('/services')}>
+                <ListChecks className="mr-2 h-4 w-4" />
+                <span>Services</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout}>
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Logout</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
+          <Button 
+            variant="outline" 
+            className="text-white border-white hover:bg-white hover:text-ojtrack-blue"
+            onClick={handleLogout}
+          >
+            Logout
+          </Button>
+        </div>
+      </header>
 
       {/* Navbar */}
       <Navbar />

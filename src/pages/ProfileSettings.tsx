@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { UserCircle } from "lucide-react";
 import Navbar from '@/components/Navbar';
-import Header from '@/components/Header';
+import Logo from '@/components/Logo';
 
 const ProfileSettings = () => {
   const navigate = useNavigate();
@@ -50,11 +50,29 @@ const ProfileSettings = () => {
       description: "Your profile information has been updated successfully.",
     });
   };
+  
+  const handleLogout = () => {
+    localStorage.removeItem("isLoggedIn");
+    toast({
+      title: "Logged out successfully",
+      description: "You have been logged out of your account",
+    });
+    navigate('/login');
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       {/* Header */}
-      <Header userName={userName} />
+      <header className="w-full px-6 py-4 flex justify-between items-center z-10 bg-ojtrack-blue text-white">
+        <Logo />
+        <Button 
+          variant="outline" 
+          className="text-white border-white hover:bg-white hover:text-ojtrack-blue"
+          onClick={handleLogout}
+        >
+          Logout
+        </Button>
+      </header>
 
       {/* Navbar */}
       <Navbar />
