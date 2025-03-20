@@ -1,33 +1,37 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Navbar from '@/components/Navbar';
-import Header from '@/components/Header';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import Logo from '@/components/Logo';
+import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
+import { toast } from '@/components/ui/use-toast';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Records = () => {
   const navigate = useNavigate();
-  const [userName, setUserName] = useState("Admin User");
 
-  useEffect(() => {
-    // Check if user is logged in
-    const isLoggedIn = localStorage.getItem('isLoggedIn');
-    if (!isLoggedIn) {
-      navigate('/login');
-      return;
-    }
-    
-    // Load username from localStorage if available
-    const storedUserName = localStorage.getItem('userName');
-    if (storedUserName) {
-      setUserName(storedUserName);
-    }
-  }, [navigate]);
+  const handleLogout = () => {
+    localStorage.removeItem("isLoggedIn");
+    toast({
+      title: "Logged out successfully",
+      description: "You have been logged out of your account",
+    });
+    navigate('/login');
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       {/* Header */}
-      <Header userName={userName} />
+      <header className="w-full px-6 py-4 flex justify-between items-center z-10 bg-ojtrack-blue text-white">
+        <Logo />
+        <Button 
+          variant="outline" 
+          className="text-white border-white hover:bg-white hover:text-ojtrack-blue"
+          onClick={handleLogout}
+        >
+          Logout
+        </Button>
+      </header>
 
       {/* Navbar */}
       <Navbar />
