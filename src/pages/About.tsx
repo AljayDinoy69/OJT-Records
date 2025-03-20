@@ -1,39 +1,34 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { toast } from "@/components/ui/use-toast";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { Info, BookOpen, Code, Users, Shield } from "lucide-react";
 import Navbar from '@/components/Navbar';
-import Logo from '@/components/Logo';
+import Header from '@/components/Header';
+import { Info, Users, Check } from 'lucide-react';
 
 const About = () => {
   const navigate = useNavigate();
-  
-  const handleLogout = () => {
-    localStorage.removeItem("isLoggedIn");
-    toast({
-      title: "Logged out successfully",
-      description: "You have been logged out of your account",
-    });
-    navigate('/login');
-  };
+  const [userName, setUserName] = useState("Admin User");
+
+  useEffect(() => {
+    // Check if user is logged in
+    const isLoggedIn = localStorage.getItem('isLoggedIn');
+    if (!isLoggedIn) {
+      navigate('/login');
+      return;
+    }
+    
+    // Load username from localStorage if available
+    const storedUserName = localStorage.getItem('userName');
+    if (storedUserName) {
+      setUserName(storedUserName);
+    }
+  }, [navigate]);
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       {/* Header */}
-      <header className="w-full px-6 py-4 flex justify-between items-center z-10 bg-ojtrack-blue text-white">
-        <Logo />
-        <Button 
-          variant="outline" 
-          className="text-white border-white hover:bg-white hover:text-ojtrack-blue"
-          onClick={handleLogout}
-        >
-          Logout
-        </Button>
-      </header>
+      <Header userName={userName} />
 
       {/* Navbar */}
       <Navbar />
@@ -43,114 +38,61 @@ const About = () => {
         <div className="max-w-3xl mx-auto">
           <div className="flex items-center gap-2 mb-6">
             <Info className="h-6 w-6 text-ojtrack-blue" />
-            <h1 className="text-3xl font-heading font-bold text-ojtrack-blue">About this Web App</h1>
+            <h1 className="text-3xl font-heading font-bold text-ojtrack-blue">About OJTrack</h1>
           </div>
           
           <Card className="shadow-md mb-6">
             <CardHeader>
               <CardTitle>OJTrack: On-the-Job Training Management System</CardTitle>
-              <CardDescription>Version 1.0.0</CardDescription>
+              <CardDescription>Streamline the OJT experience for students and supervisors</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <p>
-                OJTrack is a comprehensive on-the-job training management system designed to streamline the process of tracking student internships and supervisory oversight. Our platform provides tools for attendance monitoring, evaluation, and reporting.
+                OJTrack is a comprehensive web application designed to manage and monitor on-the-job training programs
+                for educational institutions. Our platform connects students, supervisors, and administrators
+                in a seamless digital environment.
               </p>
               
-              <div className="flex items-start gap-2 mt-4">
-                <BookOpen className="h-5 w-5 text-ojtrack-blue mt-0.5" />
-                <div>
-                  <h3 className="text-lg font-semibold">Mission</h3>
-                  <p className="text-gray-600">
-                    To simplify and enhance the on-the-job training experience for students, supervisors, and administrators through intuitive digital tools and real-time tracking capabilities.
-                  </p>
-                </div>
+              <div className="mt-6">
+                <h3 className="text-lg font-semibold mb-2 flex items-center">
+                  <Users className="mr-2 h-5 w-5 text-ojtrack-blue" />
+                  Who We Serve
+                </h3>
+                <ul className="space-y-2">
+                  <li className="flex items-start">
+                    <Check className="mr-2 h-4 w-4 text-green-500 mt-1" />
+                    <div>
+                      <span className="font-medium">Students:</span> Track attendance, submit reports, and receive evaluations
+                    </div>
+                  </li>
+                  <li className="flex items-start">
+                    <Check className="mr-2 h-4 w-4 text-green-500 mt-1" />
+                    <div>
+                      <span className="font-medium">Supervisors:</span> Monitor student progress, provide feedback, and evaluate performance
+                    </div>
+                  </li>
+                  <li className="flex items-start">
+                    <Check className="mr-2 h-4 w-4 text-green-500 mt-1" />
+                    <div>
+                      <span className="font-medium">Administrators:</span> Oversee the entire OJT program, generate reports, and ensure compliance
+                    </div>
+                  </li>
+                </ul>
               </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="shadow-md mb-6">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Code className="h-5 w-5" />
-                <span>Features</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="border rounded-md p-4 shadow-sm hover:shadow-md transition-shadow">
-                  <h3 className="font-semibold mb-2">Student Management</h3>
-                  <p className="text-sm text-gray-600">Register and manage student profiles, track their training progress.</p>
-                </div>
-                
-                <div className="border rounded-md p-4 shadow-sm hover:shadow-md transition-shadow">
-                  <h3 className="font-semibold mb-2">Supervisor Oversight</h3>
-                  <p className="text-sm text-gray-600">Assign supervisors, monitor their engagement, and facilitate communication.</p>
-                </div>
-                
-                <div className="border rounded-md p-4 shadow-sm hover:shadow-md transition-shadow">
-                  <h3 className="font-semibold mb-2">Attendance Tracking</h3>
-                  <p className="text-sm text-gray-600">Record and monitor daily attendance with sign-in and sign-out capabilities.</p>
-                </div>
-                
-                <div className="border rounded-md p-4 shadow-sm hover:shadow-md transition-shadow">
-                  <h3 className="font-semibold mb-2">Performance Evaluation</h3>
-                  <p className="text-sm text-gray-600">Structured assessment tools for evaluating student performance during training.</p>
-                </div>
-                
-                <div className="border rounded-md p-4 shadow-sm hover:shadow-md transition-shadow">
-                  <h3 className="font-semibold mb-2">Reporting & Analytics</h3>
-                  <p className="text-sm text-gray-600">Generate comprehensive reports and visualize training data with interactive charts.</p>
-                </div>
-                
-                <div className="border rounded-md p-4 shadow-sm hover:shadow-md transition-shadow">
-                  <h3 className="font-semibold mb-2">User-Friendly Dashboard</h3>
-                  <p className="text-sm text-gray-600">Intuitive interface with key metrics and information at a glance.</p>
-                </div>
+
+              <div className="mt-6">
+                <h3 className="text-lg font-semibold mb-2">Our Mission</h3>
+                <p>
+                  To provide an intuitive, reliable platform that enhances the OJT experience by simplifying 
+                  administrative tasks, improving communication, and ensuring accurate tracking and evaluation.
+                </p>
               </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="shadow-md">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                <span>Development Team</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="mb-4">OJTrack was developed by a dedicated team of professionals committed to improving the on-the-job training experience.</p>
-              
-              <div className="grid md:grid-cols-3 gap-4">
-                <div className="text-center">
-                  <div className="h-20 w-20 bg-ojtrack-blue rounded-full mx-auto flex items-center justify-center text-white text-xl font-bold">
-                    JD
-                  </div>
-                  <h3 className="font-semibold mt-2">John Doe</h3>
-                  <p className="text-sm text-gray-500">Lead Developer</p>
-                </div>
-                
-                <div className="text-center">
-                  <div className="h-20 w-20 bg-ojtrack-blue rounded-full mx-auto flex items-center justify-center text-white text-xl font-bold">
-                    JS
-                  </div>
-                  <h3 className="font-semibold mt-2">Jane Smith</h3>
-                  <p className="text-sm text-gray-500">UX Designer</p>
-                </div>
-                
-                <div className="text-center">
-                  <div className="h-20 w-20 bg-ojtrack-blue rounded-full mx-auto flex items-center justify-center text-white text-xl font-bold">
-                    RJ
-                  </div>
-                  <h3 className="font-semibold mt-2">Robert Johnson</h3>
-                  <p className="text-sm text-gray-500">Project Manager</p>
-                </div>
-              </div>
-              
-              <Separator className="my-6" />
-              
-              <div className="flex items-center gap-2 text-center justify-center">
-                <Shield className="h-5 w-5 text-ojtrack-blue" />
-                <p className="text-sm">© 2023 OJTrack. All rights reserved.</p>
+
+              <div className="mt-6">
+                <h3 className="text-lg font-semibold mb-2">Version Information</h3>
+                <p className="text-sm text-gray-500">
+                  OJTrack v1.0.0 | Developed with ❤️ for educational institutions
+                </p>
               </div>
             </CardContent>
           </Card>
