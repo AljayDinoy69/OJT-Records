@@ -12,10 +12,6 @@ import Supervisors from "./pages/Supervisors";
 import Records from "./pages/Records";
 import Evaluation from "./pages/Evaluation";
 import Attendance from "./pages/Attendance";
-import ProfileSettings from "./pages/ProfileSettings";
-import Settings from "./pages/Settings";
-import About from "./pages/About";
-import Services from "./pages/Services";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -35,10 +31,6 @@ const App = () => (
           <Route path="/records" element={<Records />} />
           <Route path="/evaluation" element={<Evaluation />} />
           <Route path="/attendance" element={<Attendance />} />
-          <Route path="/profile-settings" element={<ProfileSettings />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/services" element={<Services />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

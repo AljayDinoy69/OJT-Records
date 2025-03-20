@@ -147,19 +147,19 @@ const Home = () => {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => navigate('/profile-settings')}>
+              <DropdownMenuItem>
                 <UserCircle className="mr-2 h-4 w-4" />
                 <span>Profile Settings</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate('/settings')}>
+              <DropdownMenuItem>
                 <Settings className="mr-2 h-4 w-4" />
                 <span>Settings</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate('/about')}>
+              <DropdownMenuItem>
                 <Info className="mr-2 h-4 w-4" />
                 <span>About this Web App</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate('/services')}>
+              <DropdownMenuItem>
                 <ListChecks className="mr-2 h-4 w-4" />
                 <span>Services</span>
               </DropdownMenuItem>
