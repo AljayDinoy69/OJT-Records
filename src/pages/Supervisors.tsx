@@ -11,7 +11,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { UserPlus, Trash2, Pencil } from 'lucide-react';
-import { deleteSupervisorData, loadUsers, saveUsers, User, createOrUpdateUser } from '@/utils/adminDataUtils';
+import { deleteSupervisorData, loadUsers, saveUsers, User } from '@/utils/adminDataUtils';
 
 // Define the schema for the supervisor form
 const supervisorSchema = z.object({
@@ -19,6 +19,7 @@ const supervisorSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
   supervisorId: z.string().min(1, { message: "Supervisor ID is required." }),
   department: z.string().min(1, { message: "Department is required." }),
+  password: z.string().min(6, { message: "Password must be at least 6 characters." }).optional(),
 });
 
 type SupervisorFormValues = z.infer<typeof supervisorSchema>;
@@ -50,6 +51,7 @@ const Supervisors = () => {
       email: "",
       supervisorId: "",
       department: "",
+      password: ""
     },
   });
 
@@ -102,6 +104,11 @@ const Supervisors = () => {
     }
   }, [navigate]);
 
+  // Generate a default password
+  const generateDefaultPassword = (supervisorId: string): string => {
+    return `supervisor${supervisorId.toLowerCase()}`;
+  };
+
   const onSubmit = (data: SupervisorFormValues) => {
     // Check if email already exists in users
     const users = loadUsers();
@@ -115,6 +122,9 @@ const Supervisors = () => {
       });
       return;
     }
+    
+    // Generate default password if not provided
+    const password = data.password || generateDefaultPassword(data.supervisorId);
     
     // Create a new supervisor object with a unique ID
     const newSupervisor: Supervisor = {
@@ -132,14 +142,18 @@ const Supervisors = () => {
     // Save to localStorage
     localStorage.setItem('supervisors', JSON.stringify(updatedSupervisors));
     
-    // Create a user account for the supervisor with auto-generated password
-    const { user, password } = createOrUpdateUser({
+    // Create a user account for the supervisor
+    const newUser: User = {
       id: newSupervisor.id,
       name: data.name,
       email: data.email,
-      role: 'supervisor',
-      identifier: data.supervisorId
-    });
+      password: password,
+      role: 'supervisor'
+    };
+    
+    // Add the new user to the users list
+    const updatedUsers = [...users, newUser];
+    saveUsers(updatedUsers);
 
     // Show success message with generated password
     toast({
@@ -174,7 +188,7 @@ const Supervisors = () => {
     // Check if email has changed and if it already exists
     const users = loadUsers();
     if (data.email !== supervisorToEdit.email) {
-      const emailExists = users.some(user => user.email === data.email && user.id !== supervisorToEdit.id);
+      const emailExists = users.some(user => user.email === data.email);
       
       if (emailExists) {
         toast({
@@ -205,14 +219,22 @@ const Supervisors = () => {
     // Save to localStorage
     localStorage.setItem('supervisors', JSON.stringify(updatedSupervisors));
     
-    // Update user account
-    const { user, password } = createOrUpdateUser({
-      id: supervisorToEdit.id,
-      name: data.name,
-      email: data.email,
-      role: 'supervisor',
-      identifier: data.supervisorId
+    // Update user in users array
+    const updatedUsers = users.map(user => {
+      if (user.id === supervisorToEdit.id) {
+        // Keep the existing password
+        const existingUser = users.find(u => u.id === supervisorToEdit.id);
+        return {
+          ...user,
+          name: data.name,
+          email: data.email,
+          password: existingUser ? existingUser.password : user.password
+        };
+      }
+      return user;
     });
+    
+    saveUsers(updatedUsers);
     
     toast({
       title: "Supervisor updated",

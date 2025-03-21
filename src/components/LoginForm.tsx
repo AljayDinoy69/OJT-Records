@@ -120,12 +120,11 @@ const LoginForm: React.FC<LoginFormProps> = ({ onToggleForm }) => {
           </button>
         </p>
         
-        {/* Default login info */}
+        {/* Default test accounts */}
         <div className="mt-4 text-sm text-gray-500">
           <p>Test accounts:</p>
-          <p>Admin: aljayenocdinoy@gmail.com / aljay123</p>
-          <p>For students: student{"{studentID}"} (e.g., studentst12345)</p>
-          <p>For supervisors: supervisor{"{supervisorID}"} (e.g., supervisorsv101)</p>
+          <p>Admin: admin@example.com / admin123</p>
+          <p>Example accounts will be created when you add students/supervisors</p>
         </div>
       </div>
     </div>

@@ -11,7 +11,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { UserPlus, Trash2, Pencil } from 'lucide-react';
-import { deleteStudentData, loadUsers, saveUsers, User, createOrUpdateUser } from '@/utils/adminDataUtils';
+import { deleteStudentData, loadUsers, saveUsers, User } from '@/utils/adminDataUtils';
 
 // Define the schema for the student form
 const studentSchema = z.object({
@@ -19,6 +19,7 @@ const studentSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
   studentId: z.string().min(1, { message: "Student ID is required." }),
   program: z.string().min(1, { message: "Program is required." }),
+  password: z.string().min(6, { message: "Password must be at least 6 characters." }).optional(),
 });
 
 type StudentFormValues = z.infer<typeof studentSchema>;
@@ -50,6 +51,7 @@ const Students = () => {
       email: "",
       studentId: "",
       program: "",
+      password: ""
     },
   });
 
@@ -91,6 +93,11 @@ const Students = () => {
     }
   }, [navigate]);
 
+  // Generate a default password
+  const generateDefaultPassword = (studentId: string): string => {
+    return `student${studentId.toLowerCase()}`;
+  };
+
   const onSubmit = (data: StudentFormValues) => {
     // Check if email already exists in users
     const users = loadUsers();
@@ -104,6 +111,9 @@ const Students = () => {
       });
       return;
     }
+    
+    // Generate default password if not provided
+    const password = data.password || generateDefaultPassword(data.studentId);
     
     // Create a new student object with a unique ID
     const newStudent: Student = {
@@ -121,14 +131,18 @@ const Students = () => {
     // Save to localStorage
     localStorage.setItem('students', JSON.stringify(updatedStudents));
     
-    // Create a user account for the student with auto-generated password
-    const { user, password } = createOrUpdateUser({
+    // Create a user account for the student
+    const newUser: User = {
       id: newStudent.id,
       name: data.name,
       email: data.email,
-      role: 'student',
-      identifier: data.studentId
-    });
+      password: password,
+      role: 'student'
+    };
+    
+    // Add the new user to the users list
+    const updatedUsers = [...users, newUser];
+    saveUsers(updatedUsers);
 
     // Show success message with generated password
     toast({
@@ -163,7 +177,7 @@ const Students = () => {
     // Check if email has changed and if it already exists
     const users = loadUsers();
     if (data.email !== studentToEdit.email) {
-      const emailExists = users.some(user => user.email === data.email && user.id !== studentToEdit.id);
+      const emailExists = users.some(user => user.email === data.email);
       
       if (emailExists) {
         toast({
@@ -194,14 +208,22 @@ const Students = () => {
     // Save to localStorage
     localStorage.setItem('students', JSON.stringify(updatedStudents));
     
-    // Update user account
-    const { user, password } = createOrUpdateUser({
-      id: studentToEdit.id,
-      name: data.name,
-      email: data.email,
-      role: 'student',
-      identifier: data.studentId
+    // Update user in users array
+    const updatedUsers = users.map(user => {
+      if (user.id === studentToEdit.id) {
+        // Keep the existing password
+        const existingUser = users.find(u => u.id === studentToEdit.id);
+        return {
+          ...user,
+          name: data.name,
+          email: data.email,
+          password: existingUser ? existingUser.password : user.password
+        };
+      }
+      return user;
     });
+    
+    saveUsers(updatedUsers);
     
     toast({
       title: "Student updated",
