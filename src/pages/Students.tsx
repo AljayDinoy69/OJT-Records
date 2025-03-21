@@ -12,7 +12,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { UserPlus, Trash2 } from 'lucide-react';
-import { deleteStudentData } from '@/utils/adminDataUtils';
+import { deleteStudentData, loadUsers, saveUsers, User } from '@/utils/adminDataUtils';
 
 // Define the schema for the student form
 const studentSchema = z.object({
@@ -20,6 +20,7 @@ const studentSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
   studentId: z.string().min(1, { message: "Student ID is required." }),
   program: z.string().min(1, { message: "Program is required." }),
+  password: z.string().min(6, { message: "Password must be at least 6 characters." }),
 });
 
 type StudentFormValues = z.infer<typeof studentSchema>;
@@ -39,6 +40,7 @@ const Students = () => {
   const [studentToDelete, setStudentToDelete] = useState<Student | null>(null);
   const [students, setStudents] = useState<Student[]>([]);
   const [userName, setUserName] = useState("Admin User");
+  const [userRole, setUserRole] = useState("admin");
 
   // Initialize the form
   const form = useForm<StudentFormValues>({
@@ -47,7 +49,8 @@ const Students = () => {
       name: "",
       email: "",
       studentId: "",
-      program: ""
+      program: "",
+      password: ""
     },
   });
 
@@ -60,10 +63,16 @@ const Students = () => {
       return;
     }
     
-    // Load username from localStorage if available
+    // Load username and role from localStorage
     const storedUserName = localStorage.getItem('userName');
+    const storedUserRole = localStorage.getItem('userRole');
+    
     if (storedUserName) {
       setUserName(storedUserName);
+    }
+    
+    if (storedUserRole) {
+      setUserRole(storedUserRole);
     }
     
     const storedStudents = localStorage.getItem('students');
@@ -73,6 +82,19 @@ const Students = () => {
   }, [navigate]);
 
   const onSubmit = (data: StudentFormValues) => {
+    // Check if email already exists in users
+    const users = loadUsers();
+    const emailExists = users.some(user => user.email === data.email);
+    
+    if (emailExists) {
+      toast({
+        title: "Email already exists",
+        description: "This email is already registered in the system.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     // Create a new student object with a unique ID
     const newStudent: Student = {
       id: Date.now().toString(),
@@ -88,11 +110,24 @@ const Students = () => {
     
     // Save to localStorage
     localStorage.setItem('students', JSON.stringify(updatedStudents));
+    
+    // Create a user account for the student
+    const newUser: User = {
+      id: newStudent.id,
+      name: data.name,
+      email: data.email,
+      password: data.password,
+      role: 'student'
+    };
+    
+    // Add the new user to the users list
+    const updatedUsers = [...users, newUser];
+    saveUsers(updatedUsers);
 
     // Show success message
     toast({
       title: "Student added successfully",
-      description: `${data.name} has been added to the student list.`
+      description: `${data.name} has been added to the student list with login access.`
     });
 
     // Close the dialog
@@ -129,6 +164,16 @@ const Students = () => {
     setStudentToDelete(null);
   };
 
+  // Function to determine if action buttons should be shown based on user role
+  const showActionButtons = () => {
+    return userRole === 'admin' || userRole === 'supervisor';
+  };
+
+  // Function to determine if delete button should be shown
+  const showDeleteButton = () => {
+    return userRole === 'admin';
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       {/* Header */}
@@ -141,12 +186,14 @@ const Students = () => {
       <main className="flex-1 p-6">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-heading font-bold text-ojtrack-blue">Students List</h1>
-          <Button 
-            onClick={() => setIsAddStudentOpen(true)}
-            className="bg-ojtrack-blue hover:bg-ojtrack-blue/90"
-          >
-            <UserPlus className="mr-2 h-4 w-4" /> Add Student
-          </Button>
+          {showActionButtons() && (
+            <Button 
+              onClick={() => setIsAddStudentOpen(true)}
+              className="bg-ojtrack-blue hover:bg-ojtrack-blue/90"
+            >
+              <UserPlus className="mr-2 h-4 w-4" /> Add Student
+            </Button>
+          )}
         </div>
 
         <div className="bg-white rounded-lg shadow p-6">
@@ -163,7 +210,9 @@ const Students = () => {
                     <th className="border p-2 text-left">Email</th>
                     <th className="border p-2 text-left">Student ID</th>
                     <th className="border p-2 text-left">Program</th>
-                    <th className="border p-2 text-left">Actions</th>
+                    {showActionButtons() && (
+                      <th className="border p-2 text-left">Actions</th>
+                    )}
                   </tr>
                 </thead>
                 <tbody>
@@ -173,56 +222,60 @@ const Students = () => {
                       <td className="border p-2">{student.email}</td>
                       <td className="border p-2">{student.studentId}</td>
                       <td className="border p-2">{student.program}</td>
-                      <td className="border p-2">
-                        <div className="flex flex-wrap gap-2">
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => {
-                              toast({
-                                title: "View Records",
-                                description: `Viewing records for ${student.name}`
-                              });
-                              navigate(`/records?student=${student.id}`);
-                            }}
-                          >
-                            Records
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => {
-                              toast({
-                                title: "View Evaluation",
-                                description: `Viewing evaluation for ${student.name}`
-                              });
-                              navigate(`/evaluation?student=${student.id}`);
-                            }}
-                          >
-                            Evaluation
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => {
-                              toast({
-                                title: "View Attendance",
-                                description: `Viewing attendance for ${student.name}`
-                              });
-                              navigate(`/attendance?student=${student.id}`);
-                            }}
-                          >
-                            Attendance
-                          </Button>
-                          <Button 
-                            variant="destructive" 
-                            size="sm"
-                            onClick={() => handleDeleteClick(student)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </td>
+                      {showActionButtons() && (
+                        <td className="border p-2">
+                          <div className="flex flex-wrap gap-2">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => {
+                                toast({
+                                  title: "View Records",
+                                  description: `Viewing records for ${student.name}`
+                                });
+                                navigate(`/records?student=${student.id}`);
+                              }}
+                            >
+                              Records
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => {
+                                toast({
+                                  title: "View Evaluation",
+                                  description: `Viewing evaluation for ${student.name}`
+                                });
+                                navigate(`/evaluation?student=${student.id}`);
+                              }}
+                            >
+                              Evaluation
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => {
+                                toast({
+                                  title: "View Attendance",
+                                  description: `Viewing attendance for ${student.name}`
+                                });
+                                navigate(`/attendance?student=${student.id}`);
+                              }}
+                            >
+                              Attendance
+                            </Button>
+                            {showDeleteButton() && (
+                              <Button 
+                                variant="destructive" 
+                                size="sm"
+                                onClick={() => handleDeleteClick(student)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>
@@ -230,7 +283,7 @@ const Students = () => {
             </div>
           ) : (
             <div className="border rounded-lg p-4 bg-gray-50 text-center">
-              No students added yet. Click "Add Student" to add a new student.
+              No students added yet. {showActionButtons() ? "Click \"Add Student\" to add a new student." : ""}
             </div>
           )}
         </div>
@@ -242,7 +295,7 @@ const Students = () => {
           <DialogHeader>
             <DialogTitle>Add New Student</DialogTitle>
             <DialogDescription>
-              Enter the student details below. Click save when you're done.
+              Enter the student details below. The student will be able to log in with these credentials.
             </DialogDescription>
           </DialogHeader>
 
@@ -270,6 +323,20 @@ const Students = () => {
                     <FormLabel>Email</FormLabel>
                     <FormControl>
                       <Input placeholder="john.doe@example.com" type="email" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Password" type="password" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

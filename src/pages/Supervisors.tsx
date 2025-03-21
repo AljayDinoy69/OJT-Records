@@ -12,14 +12,15 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { UserPlus, Trash2 } from 'lucide-react';
-import { deleteSupervisorData } from '@/utils/adminDataUtils';
+import { deleteSupervisorData, loadUsers, saveUsers, User } from '@/utils/adminDataUtils';
 
 // Define the schema for the supervisor form
 const supervisorSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   email: z.string().email({ message: "Please enter a valid email address." }),
-  employeeId: z.string().min(1, { message: "Employee ID is required." }),
+  supervisorId: z.string().min(1, { message: "Supervisor ID is required." }),
   department: z.string().min(1, { message: "Department is required." }),
+  password: z.string().min(6, { message: "Password must be at least 6 characters." }),
 });
 
 type SupervisorFormValues = z.infer<typeof supervisorSchema>;
@@ -28,7 +29,7 @@ type Supervisor = {
   id: string;
   name: string;
   email: string;
-  employeeId: string;
+  supervisorId: string;
   department: string;
 }
 
@@ -39,6 +40,7 @@ const Supervisors = () => {
   const [supervisorToDelete, setSupervisorToDelete] = useState<Supervisor | null>(null);
   const [supervisors, setSupervisors] = useState<Supervisor[]>([]);
   const [userName, setUserName] = useState("Admin User");
+  const [userRole, setUserRole] = useState("admin");
 
   // Initialize the form
   const form = useForm<SupervisorFormValues>({
@@ -46,8 +48,9 @@ const Supervisors = () => {
     defaultValues: {
       name: "",
       email: "",
-      employeeId: "",
-      department: ""
+      supervisorId: "",
+      department: "",
+      password: ""
     },
   });
 
@@ -60,10 +63,27 @@ const Supervisors = () => {
       return;
     }
     
-    // Load username from localStorage if available
+    // Load username and role from localStorage
     const storedUserName = localStorage.getItem('userName');
+    const storedUserRole = localStorage.getItem('userRole');
+    
     if (storedUserName) {
       setUserName(storedUserName);
+    }
+    
+    if (storedUserRole) {
+      setUserRole(storedUserRole);
+    }
+    
+    // Only admin can access this page, redirect others
+    if (storedUserRole !== 'admin') {
+      navigate('/home');
+      toast({
+        title: "Access Denied",
+        description: "Only administrators can access the supervisors page.",
+        variant: "destructive"
+      });
+      return;
     }
     
     const storedSupervisors = localStorage.getItem('supervisors');
@@ -73,12 +93,25 @@ const Supervisors = () => {
   }, [navigate]);
 
   const onSubmit = (data: SupervisorFormValues) => {
+    // Check if email already exists in users
+    const users = loadUsers();
+    const emailExists = users.some(user => user.email === data.email);
+    
+    if (emailExists) {
+      toast({
+        title: "Email already exists",
+        description: "This email is already registered in the system.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     // Create a new supervisor object with a unique ID
     const newSupervisor: Supervisor = {
       id: Date.now().toString(),
       name: data.name,
       email: data.email,
-      employeeId: data.employeeId,
+      supervisorId: data.supervisorId,
       department: data.department
     };
 
@@ -88,11 +121,24 @@ const Supervisors = () => {
     
     // Save to localStorage
     localStorage.setItem('supervisors', JSON.stringify(updatedSupervisors));
+    
+    // Create a user account for the supervisor
+    const newUser: User = {
+      id: newSupervisor.id,
+      name: data.name,
+      email: data.email,
+      password: data.password,
+      role: 'supervisor'
+    };
+    
+    // Add the new user to the users list
+    const updatedUsers = [...users, newUser];
+    saveUsers(updatedUsers);
 
     // Show success message
     toast({
       title: "Supervisor added successfully",
-      description: `${data.name} has been added to the supervisor list.`
+      description: `${data.name} has been added to the supervisor list with login access.`
     });
 
     // Close the dialog
@@ -161,7 +207,7 @@ const Supervisors = () => {
                   <tr className="bg-gray-100">
                     <th className="border p-2 text-left">Name</th>
                     <th className="border p-2 text-left">Email</th>
-                    <th className="border p-2 text-left">Employee ID</th>
+                    <th className="border p-2 text-left">Supervisor ID</th>
                     <th className="border p-2 text-left">Department</th>
                     <th className="border p-2 text-left">Actions</th>
                   </tr>
@@ -171,7 +217,7 @@ const Supervisors = () => {
                     <tr key={supervisor.id} className="hover:bg-gray-50">
                       <td className="border p-2">{supervisor.name}</td>
                       <td className="border p-2">{supervisor.email}</td>
-                      <td className="border p-2">{supervisor.employeeId}</td>
+                      <td className="border p-2">{supervisor.supervisorId}</td>
                       <td className="border p-2">{supervisor.department}</td>
                       <td className="border p-2">
                         <div className="flex flex-wrap gap-2">
@@ -242,7 +288,7 @@ const Supervisors = () => {
           <DialogHeader>
             <DialogTitle>Add New Supervisor</DialogTitle>
             <DialogDescription>
-              Enter the supervisor details below. Click save when you're done.
+              Enter the supervisor details below. The supervisor will be able to log in with these credentials.
             </DialogDescription>
           </DialogHeader>
 
@@ -278,12 +324,26 @@ const Supervisors = () => {
 
               <FormField
                 control={form.control}
-                name="employeeId"
+                name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Employee ID</FormLabel>
+                    <FormLabel>Password</FormLabel>
                     <FormControl>
-                      <Input placeholder="EMP12345" {...field} />
+                      <Input placeholder="Password" type="password" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="supervisorId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Supervisor ID</FormLabel>
+                    <FormControl>
+                      <Input placeholder="SV12345" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -297,7 +357,7 @@ const Supervisors = () => {
                   <FormItem>
                     <FormLabel>Department</FormLabel>
                     <FormControl>
-                      <Input placeholder="Engineering" {...field} />
+                      <Input placeholder="Computer Science" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
