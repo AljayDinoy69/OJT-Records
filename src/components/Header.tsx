@@ -31,6 +31,9 @@ const Header: React.FC<HeaderProps> = ({ userName = "Admin User" }) => {
     navigate('/login');
   };
 
+  // Get profile picture from localStorage if available
+  const profilePicture = localStorage.getItem('profilePicture') || '/placeholder.svg';
+
   return (
     <header className="w-full px-6 py-4 flex justify-between items-center z-10 bg-ojtrack-blue text-white">
       <Logo />
@@ -41,7 +44,7 @@ const Header: React.FC<HeaderProps> = ({ userName = "Admin User" }) => {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-10 w-10 rounded-full overflow-hidden border-2 border-white hover:border-white hover:bg-ojtrack-navy">
               <Avatar className="h-10 w-10">
-                <AvatarImage src="/placeholder.svg" alt={userName} />
+                <AvatarImage src={profilePicture} alt={userName} />
                 <AvatarFallback className="bg-ojtrack-navy text-white">
                   {userName.split(' ').map(n => n[0]).join('').toUpperCase()}
                 </AvatarFallback>
@@ -79,14 +82,6 @@ const Header: React.FC<HeaderProps> = ({ userName = "Admin User" }) => {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-        
-        <Button 
-          variant="outline" 
-          className="text-white border-white hover:bg-white hover:text-ojtrack-blue"
-          onClick={handleLogout}
-        >
-          Logout
-        </Button>
       </div>
     </header>
   );
