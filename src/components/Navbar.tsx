@@ -1,118 +1,50 @@
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Home, Users, BookOpen, Award, Calendar } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { UserRole } from '@/utils/adminDataUtils';
 
-const getNavItemsForRole = (role: UserRole) => {
-  const commonItems = [
-    {
-      name: 'Home',
-      path: '/home',
-      icon: Home,
-      description: 'Dashboard overview'
-    }
-  ];
-  
-  const studentItems = [
-    ...commonItems,
-    {
-      name: 'Evaluation',
-      path: '/evaluation',
-      icon: Award,
-      description: 'View your evaluations'
-    },
-    {
-      name: 'Attendance',
-      path: '/attendance',
-      icon: Calendar,
-      description: 'View your attendance'
-    }
-  ];
-  
-  const supervisorItems = [
-    ...commonItems,
-    {
-      name: 'Students',
-      path: '/students',
-      icon: Users,
-      description: 'List of students'
-    },
-    {
-      name: 'Records',
-      path: '/records',
-      icon: BookOpen,
-      description: 'Student records'
-    },
-    {
-      name: 'Evaluation',
-      path: '/evaluation',
-      icon: Award,
-      description: 'Evaluation metrics'
-    },
-    {
-      name: 'Attendance',
-      path: '/attendance',
-      icon: Calendar,
-      description: 'Attendance records'
-    }
-  ];
-  
-  const adminItems = [
-    ...commonItems,
-    {
-      name: 'Students',
-      path: '/students',
-      icon: Users,
-      description: 'List of students'
-    },
-    {
-      name: 'Supervisors',
-      path: '/supervisors',
-      icon: Users,
-      description: 'List of supervisors'
-    },
-    {
-      name: 'Records',
-      path: '/records',
-      icon: BookOpen,
-      description: 'Student and supervisor records'
-    },
-    {
-      name: 'Evaluation',
-      path: '/evaluation',
-      icon: Award,
-      description: 'Evaluation metrics'
-    },
-    {
-      name: 'Attendance',
-      path: '/attendance',
-      icon: Calendar,
-      description: 'Attendance records'
-    }
-  ];
-  
-  switch (role) {
-    case 'admin':
-      return adminItems;
-    case 'supervisor':
-      return supervisorItems;
-    case 'student':
-      return studentItems;
-    default:
-      return commonItems;
+const navItems = [
+  {
+    name: 'Home',
+    path: '/home',
+    icon: Home,
+    description: 'Monitor both students and supervisors'
+  },
+  {
+    name: 'Students',
+    path: '/students',
+    icon: Users,
+    description: 'List of students'
+  },
+  {
+    name: 'Supervisors',
+    path: '/supervisors',
+    icon: Users,
+    description: 'List of supervisors'
+  },
+  {
+    name: 'Records',
+    path: '/records',
+    icon: BookOpen,
+    description: 'Student and supervisor records'
+  },
+  {
+    name: 'Evaluation',
+    path: '/evaluation',
+    icon: Award,
+    description: 'Evaluation metrics'
+  },
+  {
+    name: 'Attendance',
+    path: '/attendance',
+    icon: Calendar,
+    description: 'Attendance records'
   }
-};
+];
 
 const Navbar = () => {
   const location = useLocation();
-  const [navItems, setNavItems] = useState([]);
-  
-  useEffect(() => {
-    const userRole = localStorage.getItem('userRole') as UserRole || 'admin';
-    setNavItems(getNavItemsForRole(userRole));
-  }, []);
 
   return (
     <nav className="bg-ojtrack-blue text-white shadow-md">

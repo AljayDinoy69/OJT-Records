@@ -4,7 +4,6 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import RoleBasedRoute from "./components/RoleBasedRoute";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Home from "./pages/Home";
@@ -30,17 +29,14 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/login" element={<Login />} />
-          
-          {/* Protected routes */}
-          <Route path="/home" element={<RoleBasedRoute><Home /></RoleBasedRoute>} />
-          <Route path="/students" element={<RoleBasedRoute><Students /></RoleBasedRoute>} />
-          <Route path="/supervisors" element={<RoleBasedRoute><Supervisors /></RoleBasedRoute>} />
-          <Route path="/records" element={<RoleBasedRoute><Records /></RoleBasedRoute>} />
-          <Route path="/evaluation" element={<RoleBasedRoute><Evaluation /></RoleBasedRoute>} />
-          <Route path="/attendance" element={<RoleBasedRoute><Attendance /></RoleBasedRoute>} />
-          <Route path="/profile-settings" element={<RoleBasedRoute><ProfileSettings /></RoleBasedRoute>} />
-          <Route path="/settings" element={<RoleBasedRoute><Settings /></RoleBasedRoute>} />
-          
+          <Route path="/home" element={<Home />} />
+          <Route path="/students" element={<Students />} />
+          <Route path="/supervisors" element={<Supervisors />} />
+          <Route path="/records" element={<Records />} />
+          <Route path="/evaluation" element={<Evaluation />} />
+          <Route path="/attendance" element={<Attendance />} />
+          <Route path="/profile-settings" element={<ProfileSettings />} />
+          <Route path="/settings" element={<Settings />} />
           <Route path="/about" element={<About />} />
           <Route path="/services" element={<Services />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
