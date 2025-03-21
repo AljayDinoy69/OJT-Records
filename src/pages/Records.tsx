@@ -3,11 +3,18 @@ import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Header from '@/components/Header';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { loadRecords, RecordEntry } from '@/utils/adminDataUtils';
+import { Button } from '@/components/ui/button';
+import { format } from 'date-fns';
 
 const Records = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [userName, setUserName] = useState("Admin User");
+  const [records, setRecords] = useState<RecordEntry[]>([]);
+  const studentId = searchParams.get('student');
+  const supervisorId = searchParams.get('supervisor');
 
   useEffect(() => {
     // Check if user is logged in
@@ -22,7 +29,19 @@ const Records = () => {
     if (storedUserName) {
       setUserName(storedUserName);
     }
-  }, [navigate]);
+    
+    // Load records
+    const allRecords = loadRecords();
+    
+    // Filter records based on URL parameters if they exist
+    if (studentId) {
+      setRecords(allRecords.filter(record => record.studentId === studentId));
+    } else if (supervisorId) {
+      setRecords(allRecords.filter(record => record.supervisorId === supervisorId));
+    } else {
+      setRecords(allRecords);
+    }
+  }, [navigate, studentId, supervisorId]);
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
@@ -44,24 +63,126 @@ const Records = () => {
           
           <TabsContent value="students" className="bg-white rounded-lg shadow p-6">
             <h2 className="text-xl font-semibold mb-4">Student Records</h2>
-            <p className="text-gray-600 mb-4">
-              View detailed records and history for all students.
-            </p>
-            {/* Placeholder for student records */}
-            <div className="border rounded-lg p-4 bg-gray-50 text-center">
-              Student records will be displayed here
-            </div>
+            
+            {studentId ? (
+              <div className="mb-4">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => navigate('/students')}
+                  className="mb-4"
+                >
+                  Back to All Students
+                </Button>
+                <p className="text-gray-600 mb-4">
+                  Viewing records for student ID: {studentId}
+                </p>
+              </div>
+            ) : (
+              <p className="text-gray-600 mb-4">
+                View detailed records and history for all students.
+              </p>
+            )}
+            
+            {records.length > 0 && (studentId || !supervisorId) ? (
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="bg-gray-100">
+                      <th className="border p-2 text-left">Date</th>
+                      <th className="border p-2 text-left">Title</th>
+                      <th className="border p-2 text-left">Description</th>
+                      <th className="border p-2 text-left">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {records
+                      .filter(record => !supervisorId && (studentId ? record.studentId === studentId : true))
+                      .map((record) => (
+                        <tr key={record.id} className="hover:bg-gray-50">
+                          <td className="border p-2">{record.date}</td>
+                          <td className="border p-2">{record.title}</td>
+                          <td className="border p-2">{record.description}</td>
+                          <td className="border p-2">
+                            <span className={`inline-block px-2 py-1 rounded text-xs font-medium
+                              ${record.status === 'approved' ? 'bg-green-100 text-green-800' : 
+                                record.status === 'rejected' ? 'bg-red-100 text-red-800' : 
+                                'bg-yellow-100 text-yellow-800'}`}>
+                              {record.status.charAt(0).toUpperCase() + record.status.slice(1)}
+                            </span>
+                          </td>
+                        </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="border rounded-lg p-4 bg-gray-50 text-center">
+                {studentId ? "No records available for this student" : "No student records available"}
+              </div>
+            )}
           </TabsContent>
           
           <TabsContent value="supervisors" className="bg-white rounded-lg shadow p-6">
             <h2 className="text-xl font-semibold mb-4">Supervisor Records</h2>
-            <p className="text-gray-600 mb-4">
-              View detailed records and history for all supervisors.
-            </p>
-            {/* Placeholder for supervisor records */}
-            <div className="border rounded-lg p-4 bg-gray-50 text-center">
-              Supervisor records will be displayed here
-            </div>
+            
+            {supervisorId ? (
+              <div className="mb-4">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => navigate('/supervisors')}
+                  className="mb-4"
+                >
+                  Back to All Supervisors
+                </Button>
+                <p className="text-gray-600 mb-4">
+                  Viewing records for supervisor ID: {supervisorId}
+                </p>
+              </div>
+            ) : (
+              <p className="text-gray-600 mb-4">
+                View detailed records and history for all supervisors.
+              </p>
+            )}
+            
+            {records.length > 0 && (supervisorId || !studentId) ? (
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="bg-gray-100">
+                      <th className="border p-2 text-left">Date</th>
+                      <th className="border p-2 text-left">Title</th>
+                      <th className="border p-2 text-left">Description</th>
+                      <th className="border p-2 text-left">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {records
+                      .filter(record => !studentId && (supervisorId ? record.supervisorId === supervisorId : true))
+                      .map((record) => (
+                        <tr key={record.id} className="hover:bg-gray-50">
+                          <td className="border p-2">{record.date}</td>
+                          <td className="border p-2">{record.title}</td>
+                          <td className="border p-2">{record.description}</td>
+                          <td className="border p-2">
+                            <span className={`inline-block px-2 py-1 rounded text-xs font-medium
+                              ${record.status === 'approved' ? 'bg-green-100 text-green-800' : 
+                                record.status === 'rejected' ? 'bg-red-100 text-red-800' : 
+                                'bg-yellow-100 text-yellow-800'}`}>
+                              {record.status.charAt(0).toUpperCase() + record.status.slice(1)}
+                            </span>
+                          </td>
+                        </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="border rounded-lg p-4 bg-gray-50 text-center">
+                {supervisorId ? "No records available for this supervisor" : "No supervisor records available"}
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </main>
