@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Header from '@/components/Header';
@@ -11,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { UserPlus, Trash2 } from 'lucide-react';
+import { UserPlus, Trash2, Pencil } from 'lucide-react';
 import { deleteStudentData, loadUsers, saveUsers, User } from '@/utils/adminDataUtils';
 
 // Define the schema for the student form
@@ -20,7 +19,7 @@ const studentSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
   studentId: z.string().min(1, { message: "Student ID is required." }),
   program: z.string().min(1, { message: "Program is required." }),
-  password: z.string().min(6, { message: "Password must be at least 6 characters." }),
+  password: z.string().min(6, { message: "Password must be at least 6 characters." }).optional(),
 });
 
 type StudentFormValues = z.infer<typeof studentSchema>;
@@ -36,13 +35,15 @@ type Student = {
 const Students = () => {
   const navigate = useNavigate();
   const [isAddStudentOpen, setIsAddStudentOpen] = useState(false);
+  const [isEditStudentOpen, setIsEditStudentOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [studentToDelete, setStudentToDelete] = useState<Student | null>(null);
+  const [studentToEdit, setStudentToEdit] = useState<Student | null>(null);
   const [students, setStudents] = useState<Student[]>([]);
   const [userName, setUserName] = useState("Admin User");
   const [userRole, setUserRole] = useState("admin");
 
-  // Initialize the form
+  // Initialize the form for adding a new student
   const form = useForm<StudentFormValues>({
     resolver: zodResolver(studentSchema),
     defaultValues: {
@@ -51,6 +52,17 @@ const Students = () => {
       studentId: "",
       program: "",
       password: ""
+    },
+  });
+
+  // Initialize form for editing a student
+  const editForm = useForm<StudentFormValues>({
+    resolver: zodResolver(studentSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      studentId: "",
+      program: "",
     },
   });
 
@@ -81,6 +93,11 @@ const Students = () => {
     }
   }, [navigate]);
 
+  // Generate a default password
+  const generateDefaultPassword = (studentId: string): string => {
+    return `student${studentId.toLowerCase()}`;
+  };
+
   const onSubmit = (data: StudentFormValues) => {
     // Check if email already exists in users
     const users = loadUsers();
@@ -94,6 +111,9 @@ const Students = () => {
       });
       return;
     }
+    
+    // Generate default password if not provided
+    const password = data.password || generateDefaultPassword(data.studentId);
     
     // Create a new student object with a unique ID
     const newStudent: Student = {
@@ -116,7 +136,7 @@ const Students = () => {
       id: newStudent.id,
       name: data.name,
       email: data.email,
-      password: data.password,
+      password: password,
       role: 'student'
     };
     
@@ -124,10 +144,10 @@ const Students = () => {
     const updatedUsers = [...users, newUser];
     saveUsers(updatedUsers);
 
-    // Show success message
+    // Show success message with generated password
     toast({
       title: "Student added successfully",
-      description: `${data.name} has been added to the student list with login access.`
+      description: `${data.name} has been added with default password: ${password}`
     });
 
     // Close the dialog
@@ -135,6 +155,83 @@ const Students = () => {
     
     // Reset the form
     form.reset();
+  };
+
+  const handleEditClick = (student: Student) => {
+    setStudentToEdit(student);
+    
+    // Load student data into edit form
+    editForm.reset({
+      name: student.name,
+      email: student.email,
+      studentId: student.studentId,
+      program: student.program
+    });
+    
+    setIsEditStudentOpen(true);
+  };
+
+  const handleEditSubmit = (data: StudentFormValues) => {
+    if (!studentToEdit) return;
+    
+    // Check if email has changed and if it already exists
+    const users = loadUsers();
+    if (data.email !== studentToEdit.email) {
+      const emailExists = users.some(user => user.email === data.email);
+      
+      if (emailExists) {
+        toast({
+          title: "Email already exists",
+          description: "This email is already registered in the system.",
+          variant: "destructive"
+        });
+        return;
+      }
+    }
+    
+    // Update student in students array
+    const updatedStudents = students.map(s => {
+      if (s.id === studentToEdit.id) {
+        return {
+          ...s,
+          name: data.name,
+          email: data.email,
+          studentId: data.studentId,
+          program: data.program
+        };
+      }
+      return s;
+    });
+    
+    setStudents(updatedStudents);
+    
+    // Save to localStorage
+    localStorage.setItem('students', JSON.stringify(updatedStudents));
+    
+    // Update user in users array
+    const updatedUsers = users.map(user => {
+      if (user.id === studentToEdit.id) {
+        // Keep the existing password
+        const existingUser = users.find(u => u.id === studentToEdit.id);
+        return {
+          ...user,
+          name: data.name,
+          email: data.email,
+          password: existingUser ? existingUser.password : user.password
+        };
+      }
+      return user;
+    });
+    
+    saveUsers(updatedUsers);
+    
+    toast({
+      title: "Student updated",
+      description: `${data.name}'s information has been updated.`
+    });
+    
+    setIsEditStudentOpen(false);
+    setStudentToEdit(null);
   };
 
   const handleDeleteClick = (student: Student) => {
@@ -171,6 +268,11 @@ const Students = () => {
 
   // Function to determine if delete button should be shown
   const showDeleteButton = () => {
+    return userRole === 'admin';
+  };
+
+  // Function to determine if edit button should be shown
+  const showEditButton = () => {
     return userRole === 'admin';
   };
 
@@ -264,6 +366,15 @@ const Students = () => {
                             >
                               Attendance
                             </Button>
+                            {showEditButton() && (
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleEditClick(student)}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                            )}
                             {showDeleteButton() && (
                               <Button 
                                 variant="destructive" 
@@ -295,7 +406,7 @@ const Students = () => {
           <DialogHeader>
             <DialogTitle>Add New Student</DialogTitle>
             <DialogDescription>
-              Enter the student details below. The student will be able to log in with these credentials.
+              Enter the student details below. A default password will be generated for login.
             </DialogDescription>
           </DialogHeader>
 
@@ -323,20 +434,6 @@ const Students = () => {
                     <FormLabel>Email</FormLabel>
                     <FormControl>
                       <Input placeholder="john.doe@example.com" type="email" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Password</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Password" type="password" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -376,6 +473,85 @@ const Students = () => {
                   <Button variant="outline" type="button">Cancel</Button>
                 </DialogClose>
                 <Button type="submit">Save Student</Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Student Dialog */}
+      <Dialog open={isEditStudentOpen} onOpenChange={setIsEditStudentOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Edit Student</DialogTitle>
+            <DialogDescription>
+              Update the student details below.
+            </DialogDescription>
+          </DialogHeader>
+
+          <Form {...editForm}>
+            <form onSubmit={editForm.handleSubmit(handleEditSubmit)} className="space-y-4">
+              <FormField
+                control={editForm.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Full Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="John Doe" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={editForm.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input placeholder="john.doe@example.com" type="email" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={editForm.control}
+                name="studentId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Student ID</FormLabel>
+                    <FormControl>
+                      <Input placeholder="ST12345" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={editForm.control}
+                name="program"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Program</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Computer Science" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button variant="outline" type="button">Cancel</Button>
+                </DialogClose>
+                <Button type="submit">Update Student</Button>
               </DialogFooter>
             </form>
           </Form>

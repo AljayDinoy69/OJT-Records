@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Header from '@/components/Header';
@@ -11,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { UserPlus, Trash2 } from 'lucide-react';
+import { UserPlus, Trash2, Pencil } from 'lucide-react';
 import { deleteSupervisorData, loadUsers, saveUsers, User } from '@/utils/adminDataUtils';
 
 // Define the schema for the supervisor form
@@ -20,7 +19,7 @@ const supervisorSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
   supervisorId: z.string().min(1, { message: "Supervisor ID is required." }),
   department: z.string().min(1, { message: "Department is required." }),
-  password: z.string().min(6, { message: "Password must be at least 6 characters." }),
+  password: z.string().min(6, { message: "Password must be at least 6 characters." }).optional(),
 });
 
 type SupervisorFormValues = z.infer<typeof supervisorSchema>;
@@ -36,13 +35,15 @@ type Supervisor = {
 const Supervisors = () => {
   const navigate = useNavigate();
   const [isAddSupervisorOpen, setIsAddSupervisorOpen] = useState(false);
+  const [isEditSupervisorOpen, setIsEditSupervisorOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [supervisorToDelete, setSupervisorToDelete] = useState<Supervisor | null>(null);
+  const [supervisorToEdit, setSupervisorToEdit] = useState<Supervisor | null>(null);
   const [supervisors, setSupervisors] = useState<Supervisor[]>([]);
   const [userName, setUserName] = useState("Admin User");
   const [userRole, setUserRole] = useState("admin");
 
-  // Initialize the form
+  // Initialize the form for adding a new supervisor
   const form = useForm<SupervisorFormValues>({
     resolver: zodResolver(supervisorSchema),
     defaultValues: {
@@ -51,6 +52,17 @@ const Supervisors = () => {
       supervisorId: "",
       department: "",
       password: ""
+    },
+  });
+
+  // Initialize form for editing a supervisor
+  const editForm = useForm<SupervisorFormValues>({
+    resolver: zodResolver(supervisorSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      supervisorId: "",
+      department: "",
     },
   });
 
@@ -92,6 +104,11 @@ const Supervisors = () => {
     }
   }, [navigate]);
 
+  // Generate a default password
+  const generateDefaultPassword = (supervisorId: string): string => {
+    return `supervisor${supervisorId.toLowerCase()}`;
+  };
+
   const onSubmit = (data: SupervisorFormValues) => {
     // Check if email already exists in users
     const users = loadUsers();
@@ -105,6 +122,9 @@ const Supervisors = () => {
       });
       return;
     }
+    
+    // Generate default password if not provided
+    const password = data.password || generateDefaultPassword(data.supervisorId);
     
     // Create a new supervisor object with a unique ID
     const newSupervisor: Supervisor = {
@@ -127,7 +147,7 @@ const Supervisors = () => {
       id: newSupervisor.id,
       name: data.name,
       email: data.email,
-      password: data.password,
+      password: password,
       role: 'supervisor'
     };
     
@@ -135,10 +155,10 @@ const Supervisors = () => {
     const updatedUsers = [...users, newUser];
     saveUsers(updatedUsers);
 
-    // Show success message
+    // Show success message with generated password
     toast({
       title: "Supervisor added successfully",
-      description: `${data.name} has been added to the supervisor list with login access.`
+      description: `${data.name} has been added with default password: ${password}`
     });
 
     // Close the dialog
@@ -146,6 +166,83 @@ const Supervisors = () => {
     
     // Reset the form
     form.reset();
+  };
+
+  const handleEditClick = (supervisor: Supervisor) => {
+    setSupervisorToEdit(supervisor);
+    
+    // Load supervisor data into edit form
+    editForm.reset({
+      name: supervisor.name,
+      email: supervisor.email,
+      supervisorId: supervisor.supervisorId,
+      department: supervisor.department
+    });
+    
+    setIsEditSupervisorOpen(true);
+  };
+
+  const handleEditSubmit = (data: SupervisorFormValues) => {
+    if (!supervisorToEdit) return;
+    
+    // Check if email has changed and if it already exists
+    const users = loadUsers();
+    if (data.email !== supervisorToEdit.email) {
+      const emailExists = users.some(user => user.email === data.email);
+      
+      if (emailExists) {
+        toast({
+          title: "Email already exists",
+          description: "This email is already registered in the system.",
+          variant: "destructive"
+        });
+        return;
+      }
+    }
+    
+    // Update supervisor in supervisors array
+    const updatedSupervisors = supervisors.map(s => {
+      if (s.id === supervisorToEdit.id) {
+        return {
+          ...s,
+          name: data.name,
+          email: data.email,
+          supervisorId: data.supervisorId,
+          department: data.department
+        };
+      }
+      return s;
+    });
+    
+    setSupervisors(updatedSupervisors);
+    
+    // Save to localStorage
+    localStorage.setItem('supervisors', JSON.stringify(updatedSupervisors));
+    
+    // Update user in users array
+    const updatedUsers = users.map(user => {
+      if (user.id === supervisorToEdit.id) {
+        // Keep the existing password
+        const existingUser = users.find(u => u.id === supervisorToEdit.id);
+        return {
+          ...user,
+          name: data.name,
+          email: data.email,
+          password: existingUser ? existingUser.password : user.password
+        };
+      }
+      return user;
+    });
+    
+    saveUsers(updatedUsers);
+    
+    toast({
+      title: "Supervisor updated",
+      description: `${data.name}'s information has been updated.`
+    });
+    
+    setIsEditSupervisorOpen(false);
+    setSupervisorToEdit(null);
   };
 
   const handleDeleteClick = (supervisor: Supervisor) => {
@@ -261,6 +358,13 @@ const Supervisors = () => {
                             Attendance
                           </Button>
                           <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleEditClick(supervisor)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button 
                             variant="destructive" 
                             size="sm"
                             onClick={() => handleDeleteClick(supervisor)}
@@ -288,7 +392,7 @@ const Supervisors = () => {
           <DialogHeader>
             <DialogTitle>Add New Supervisor</DialogTitle>
             <DialogDescription>
-              Enter the supervisor details below. The supervisor will be able to log in with these credentials.
+              Enter the supervisor details below. A default password will be generated for login.
             </DialogDescription>
           </DialogHeader>
 
@@ -316,20 +420,6 @@ const Supervisors = () => {
                     <FormLabel>Email</FormLabel>
                     <FormControl>
                       <Input placeholder="jane.smith@example.com" type="email" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Password</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Password" type="password" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -369,6 +459,85 @@ const Supervisors = () => {
                   <Button variant="outline" type="button">Cancel</Button>
                 </DialogClose>
                 <Button type="submit">Save Supervisor</Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Supervisor Dialog */}
+      <Dialog open={isEditSupervisorOpen} onOpenChange={setIsEditSupervisorOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Edit Supervisor</DialogTitle>
+            <DialogDescription>
+              Update the supervisor details below.
+            </DialogDescription>
+          </DialogHeader>
+
+          <Form {...editForm}>
+            <form onSubmit={editForm.handleSubmit(handleEditSubmit)} className="space-y-4">
+              <FormField
+                control={editForm.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Full Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Jane Smith" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={editForm.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input placeholder="jane.smith@example.com" type="email" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={editForm.control}
+                name="supervisorId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Supervisor ID</FormLabel>
+                    <FormControl>
+                      <Input placeholder="SV12345" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={editForm.control}
+                name="department"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Department</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Computer Science" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button variant="outline" type="button">Cancel</Button>
+                </DialogClose>
+                <Button type="submit">Update Supervisor</Button>
               </DialogFooter>
             </form>
           </Form>

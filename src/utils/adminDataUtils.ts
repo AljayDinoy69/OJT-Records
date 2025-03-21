@@ -89,8 +89,8 @@ export const loadUsers = (): User[] => {
     const adminUser: User = {
       id: 'admin-1',
       name: 'Admin User',
-      email: 'admin@example.com',
-      password: 'admin123', // In a real app, this should be hashed
+      email: 'aljayenocdinoy@gmail.com',
+      password: 'aljay123', // In a real app, this should be hashed
       role: 'admin',
     };
     users.push(adminUser);
