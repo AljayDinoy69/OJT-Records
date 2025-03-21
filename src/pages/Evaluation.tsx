@@ -35,9 +35,9 @@ const Evaluation = () => {
     
     // Filter evaluations based on URL parameters if they exist
     if (studentId) {
-      setEvaluations(allEvaluations.filter(eval => eval.studentId === studentId));
+      setEvaluations(allEvaluations.filter(evaluation => evaluation.studentId === studentId));
     } else if (supervisorId) {
-      setEvaluations(allEvaluations.filter(eval => eval.supervisorId === supervisorId));
+      setEvaluations(allEvaluations.filter(evaluation => evaluation.supervisorId === supervisorId));
     } else {
       setEvaluations(allEvaluations);
     }
@@ -120,7 +120,7 @@ const Evaluation = () => {
                   </thead>
                   <tbody>
                     {evaluations
-                      .filter(eval => !supervisorId && (studentId ? eval.studentId === studentId : true))
+                      .filter(evaluation => !supervisorId && (studentId ? evaluation.studentId === studentId : true))
                       .map((evaluation) => (
                         <tr key={evaluation.id} className="hover:bg-gray-50">
                           <td className="border p-2">{evaluation.date}</td>
@@ -183,7 +183,7 @@ const Evaluation = () => {
                   </thead>
                   <tbody>
                     {evaluations
-                      .filter(eval => !studentId && (supervisorId ? eval.supervisorId === supervisorId : true))
+                      .filter(evaluation => !studentId && (supervisorId ? evaluation.supervisorId === supervisorId : true))
                       .map((evaluation) => (
                         <tr key={evaluation.id} className="hover:bg-gray-50">
                           <td className="border p-2">{evaluation.date}</td>

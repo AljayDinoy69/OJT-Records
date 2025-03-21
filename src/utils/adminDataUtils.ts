@@ -76,7 +76,7 @@ export const deleteStudentData = (studentId: string): void => {
   
   // Remove from evaluations
   const evaluations = loadEvaluations();
-  const updatedEvaluations = evaluations.filter(eval => eval.studentId !== studentId);
+  const updatedEvaluations = evaluations.filter(evaluation => evaluation.studentId !== studentId);
   saveEvaluations(updatedEvaluations);
   
   // Remove from attendance
@@ -94,7 +94,7 @@ export const deleteSupervisorData = (supervisorId: string): void => {
   
   // Remove from evaluations
   const evaluations = loadEvaluations();
-  const updatedEvaluations = evaluations.filter(eval => eval.supervisorId !== supervisorId);
+  const updatedEvaluations = evaluations.filter(evaluation => evaluation.supervisorId !== supervisorId);
   saveEvaluations(updatedEvaluations);
   
   // Remove from attendance
