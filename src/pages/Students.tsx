@@ -11,8 +11,7 @@ import { Input } from "@/components/ui/input";
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { UserPlus, Trash2 } from 'lucide-react';
-import { deleteStudentData } from '@/utils/adminDataUtils';
+import { UserPlus } from 'lucide-react';
 
 // Define the schema for the student form
 const studentSchema = z.object({
@@ -35,8 +34,6 @@ type Student = {
 const Students = () => {
   const navigate = useNavigate();
   const [isAddStudentOpen, setIsAddStudentOpen] = useState(false);
-  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
-  const [studentToDelete, setStudentToDelete] = useState<Student | null>(null);
   const [students, setStudents] = useState<Student[]>([]);
   const [userName, setUserName] = useState("Admin User");
 
@@ -72,6 +69,15 @@ const Students = () => {
     }
   }, [navigate]);
 
+  const handleLogout = () => {
+    localStorage.removeItem("isLoggedIn");
+    toast({
+      title: "Logged out successfully",
+      description: "You have been logged out of your account",
+    });
+    navigate('/login');
+  };
+
   const onSubmit = (data: StudentFormValues) => {
     // Create a new student object with a unique ID
     const newStudent: Student = {
@@ -100,33 +106,6 @@ const Students = () => {
     
     // Reset the form
     form.reset();
-  };
-
-  const handleDeleteClick = (student: Student) => {
-    setStudentToDelete(student);
-    setIsDeleteConfirmOpen(true);
-  };
-
-  const confirmDelete = () => {
-    if (!studentToDelete) return;
-    
-    // Delete the student
-    const updatedStudents = students.filter(s => s.id !== studentToDelete.id);
-    setStudents(updatedStudents);
-    
-    // Save to localStorage
-    localStorage.setItem('students', JSON.stringify(updatedStudents));
-    
-    // Delete all associated data
-    deleteStudentData(studentToDelete.id);
-    
-    toast({
-      title: "Student deleted",
-      description: `${studentToDelete.name} and all associated records have been deleted.`
-    });
-    
-    setIsDeleteConfirmOpen(false);
-    setStudentToDelete(null);
   };
 
   return (
@@ -174,54 +153,47 @@ const Students = () => {
                       <td className="border p-2">{student.studentId}</td>
                       <td className="border p-2">{student.program}</td>
                       <td className="border p-2">
-                        <div className="flex flex-wrap gap-2">
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => {
-                              toast({
-                                title: "View Records",
-                                description: `Viewing records for ${student.name}`
-                              });
-                              navigate(`/records?student=${student.id}`);
-                            }}
-                          >
-                            Records
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => {
-                              toast({
-                                title: "View Evaluation",
-                                description: `Viewing evaluation for ${student.name}`
-                              });
-                              navigate(`/evaluation?student=${student.id}`);
-                            }}
-                          >
-                            Evaluation
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => {
-                              toast({
-                                title: "View Attendance",
-                                description: `Viewing attendance for ${student.name}`
-                              });
-                              navigate(`/attendance?student=${student.id}`);
-                            }}
-                          >
-                            Attendance
-                          </Button>
-                          <Button 
-                            variant="destructive" 
-                            size="sm"
-                            onClick={() => handleDeleteClick(student)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => {
+                            toast({
+                              title: "View Records",
+                              description: `Viewing records for ${student.name}`
+                            });
+                            navigate(`/records?student=${student.id}`);
+                          }}
+                          className="mr-2"
+                        >
+                          Records
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => {
+                            toast({
+                              title: "View Evaluation",
+                              description: `Viewing evaluation for ${student.name}`
+                            });
+                            navigate(`/evaluation?student=${student.id}`);
+                          }}
+                          className="mr-2"
+                        >
+                          Evaluation
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => {
+                            toast({
+                              title: "View Attendance",
+                              description: `Viewing attendance for ${student.name}`
+                            });
+                            navigate(`/attendance?student=${student.id}`);
+                          }}
+                        >
+                          Attendance
+                        </Button>
                       </td>
                     </tr>
                   ))}
@@ -312,24 +284,6 @@ const Students = () => {
               </DialogFooter>
             </form>
           </Form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Confirm Deletion</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete {studentToDelete?.name}? This will remove all their records, evaluations, and attendance data.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="mt-4">
-            <DialogClose asChild>
-              <Button variant="outline" type="button">Cancel</Button>
-            </DialogClose>
-            <Button variant="destructive" onClick={confirmDelete}>Delete</Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

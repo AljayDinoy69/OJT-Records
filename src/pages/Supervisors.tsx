@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Header from '@/components/Header';
@@ -11,8 +10,7 @@ import { Input } from "@/components/ui/input";
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { UserPlus, Trash2 } from 'lucide-react';
-import { deleteSupervisorData } from '@/utils/adminDataUtils';
+import { UserPlus } from 'lucide-react';
 
 // Define the schema for the supervisor form
 const supervisorSchema = z.object({
@@ -35,8 +33,6 @@ type Supervisor = {
 const Supervisors = () => {
   const navigate = useNavigate();
   const [isAddSupervisorOpen, setIsAddSupervisorOpen] = useState(false);
-  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
-  const [supervisorToDelete, setSupervisorToDelete] = useState<Supervisor | null>(null);
   const [supervisors, setSupervisors] = useState<Supervisor[]>([]);
   const [userName, setUserName] = useState("Admin User");
 
@@ -102,33 +98,6 @@ const Supervisors = () => {
     form.reset();
   };
 
-  const handleDeleteClick = (supervisor: Supervisor) => {
-    setSupervisorToDelete(supervisor);
-    setIsDeleteConfirmOpen(true);
-  };
-
-  const confirmDelete = () => {
-    if (!supervisorToDelete) return;
-    
-    // Delete the supervisor
-    const updatedSupervisors = supervisors.filter(s => s.id !== supervisorToDelete.id);
-    setSupervisors(updatedSupervisors);
-    
-    // Save to localStorage
-    localStorage.setItem('supervisors', JSON.stringify(updatedSupervisors));
-    
-    // Delete all associated data
-    deleteSupervisorData(supervisorToDelete.id);
-    
-    toast({
-      title: "Supervisor deleted",
-      description: `${supervisorToDelete.name} and all associated records have been deleted.`
-    });
-    
-    setIsDeleteConfirmOpen(false);
-    setSupervisorToDelete(null);
-  };
-
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       {/* Header */}
@@ -174,54 +143,47 @@ const Supervisors = () => {
                       <td className="border p-2">{supervisor.employeeId}</td>
                       <td className="border p-2">{supervisor.department}</td>
                       <td className="border p-2">
-                        <div className="flex flex-wrap gap-2">
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => {
-                              toast({
-                                title: "View Records",
-                                description: `Viewing records for ${supervisor.name}`
-                              });
-                              navigate(`/records?supervisor=${supervisor.id}`);
-                            }}
-                          >
-                            Records
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => {
-                              toast({
-                                title: "View Evaluation",
-                                description: `Viewing evaluation for ${supervisor.name}`
-                              });
-                              navigate(`/evaluation?supervisor=${supervisor.id}`);
-                            }}
-                          >
-                            Evaluation
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => {
-                              toast({
-                                title: "View Attendance",
-                                description: `Viewing attendance for ${supervisor.name}`
-                              });
-                              navigate(`/attendance?supervisor=${supervisor.id}`);
-                            }}
-                          >
-                            Attendance
-                          </Button>
-                          <Button 
-                            variant="destructive" 
-                            size="sm"
-                            onClick={() => handleDeleteClick(supervisor)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => {
+                            toast({
+                              title: "View Records",
+                              description: `Viewing records for ${supervisor.name}`
+                            });
+                            navigate(`/records?supervisor=${supervisor.id}`);
+                          }}
+                          className="mr-2"
+                        >
+                          Records
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => {
+                            toast({
+                              title: "View Evaluation",
+                              description: `Viewing evaluation for ${supervisor.name}`
+                            });
+                            navigate(`/evaluation?supervisor=${supervisor.id}`);
+                          }}
+                          className="mr-2"
+                        >
+                          Evaluation
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => {
+                            toast({
+                              title: "View Attendance",
+                              description: `Viewing attendance for ${supervisor.name}`
+                            });
+                            navigate(`/attendance?supervisor=${supervisor.id}`);
+                          }}
+                        >
+                          Attendance
+                        </Button>
                       </td>
                     </tr>
                   ))}
@@ -312,24 +274,6 @@ const Supervisors = () => {
               </DialogFooter>
             </form>
           </Form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Confirm Deletion</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete {supervisorToDelete?.name}? This will remove all their records, evaluations, and attendance data.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="mt-4">
-            <DialogClose asChild>
-              <Button variant="outline" type="button">Cancel</Button>
-            </DialogClose>
-            <Button variant="destructive" onClick={confirmDelete}>Delete</Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
